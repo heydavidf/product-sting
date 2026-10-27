@@ -65,6 +65,33 @@ class SoundLibraries(unittest.TestCase):
                 )
                 self.assertIn(os.path.basename(e["file"]), licences)
 
+    def test_the_barty_bart_copy_has_no_download_entries(self):
+        folder = os.path.join(LIB, "barty-bart")
+        with open(os.path.join(folder, "manifest.json")) as f:
+            manifest = json.load(f)
+        with open(os.path.join(folder, "LICENSES.md")) as f:
+            licences = f.read()
+        self.assertNotIn("runtime", manifest)
+        for e in manifest["default_kit"] + manifest["bundled"]:
+            self.assertTrue(e.get("file"), e)
+            self.assertNotIn("runtime_url", e)
+        self.assertNotIn("runtime:", licences)
+        self.assertNotIn("so the skill downloads them", licences)
+
+    def test_each_library_carries_its_upstream_mit_licence(self):
+        for name, holder in (
+            ("coldframe", "Saqlain Abbas (Razee4315)"),
+            ("barty-bart", "Bart"),
+        ):
+            with self.subTest(library=name):
+                with open(os.path.join(LIB, name, "UPSTREAM-LICENSE.txt")) as f:
+                    text = f.read()
+                self.assertTrue(text.startswith("MIT License\n"))
+                self.assertIn(f"Copyright (c) 2026 {holder}\n", text)
+                self.assertIn(
+                    "The above copyright notice and this permission notice", text
+                )
+
     def test_no_audio_outside_the_two_libraries(self):
         everywhere = audio_files(SKILL)
         inside = [

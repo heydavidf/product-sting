@@ -1,5 +1,7 @@
 # Sound effects: sources and licenses
 
+> **In product-sting:** this file, `library.json` and the WAV files come unchanged from [Razee4315/coldframe](https://github.com/Razee4315/coldframe) (`sfx/`, commit 2a9794384a4af3d4247001988b5c944fa88c1920), MIT licensed: see `UPSTREAM-LICENSE.txt` in this folder. `scripts/build_sfx.py`, named below, is upstream's and is not part of product-sting.
+
 Every file here is CC0 (public domain): free to use, modify and redistribute, no attribution required. Trimmed, loudness-matched and faded by `scripts/build_sfx.py`.
 
 | File | Source | License |

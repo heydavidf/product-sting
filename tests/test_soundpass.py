@@ -104,8 +104,14 @@ class CuePlacement(unittest.TestCase):
     def setUp(self):
         level = 0.1
         self.sounds = {
-            "press-1.wav": np.full(2400, level, dtype=np.float32),
-            "press-2.wav": np.full(2400, level, dtype=np.float32),
+            # The presses rise from half to one and a half times the level, so a take that lost its
+            # first samples would start louder than it should.
+            "press-1.wav": np.linspace(
+                0.5 * level, 1.5 * level, 2400, dtype=np.float32
+            ),
+            "press-2.wav": np.linspace(
+                0.5 * level, 1.5 * level, 2400, dtype=np.float32
+            ),
             "whoosh.wav": np.full(4800, level, dtype=np.float32),
             "rain.wav": np.full(4800, level, dtype=np.float32),
         }
@@ -161,18 +167,18 @@ class CuePlacement(unittest.TestCase):
             if step["cue"].get("until"):
                 continue
             start = int(max(0.0, self.expected_start(step)) * SR)
-            length = int(len(self.sounds[step["take"]["file"]]) / step["rate"])
-            amplitude = self.level * 10 ** (step["gain_db"] / 20)
+            sound = self.sounds[step["take"]["file"]]
+            length = int(len(sound) / step["rate"])
+            gain = 10 ** (step["gain_db"] / 20)
+            first, last = float(sound[0]) * gain, float(sound[-1]) * gain
             with self.subTest(cue=step["cue"]["desc"]):
                 if start > 0:
                     self.assertEqual(self.mix[start - 1], 0.0)
                 self.assertAlmostEqual(
-                    float(self.mix[start]), amplitude, delta=amplitude * 1e-5
+                    float(self.mix[start]), first, delta=first * 1e-5
                 )
                 self.assertAlmostEqual(
-                    float(self.mix[start + length - 1]),
-                    amplitude,
-                    delta=amplitude * 1e-5,
+                    float(self.mix[start + length - 1]), last, delta=last * 1e-5
                 )
                 self.assertEqual(self.mix[start + length], 0.0)
 
@@ -187,10 +193,14 @@ class CuePlacement(unittest.TestCase):
         self.assertTrue(1.12 * 0.96 <= whoosh["rate"] <= 1.12 * 1.04)
 
     def test_a_cue_before_the_lead_starts_at_zero_whole(self):
-        first = self.plan[0]
-        length = int(len(self.sounds[first["take"]["file"]]) / first["rate"])
-        amplitude = self.level * 10 ** (first["gain_db"] / 20)
-        self.assertAlmostEqual(float(self.mix[0]), amplitude, delta=amplitude * 1e-5)
+        step = self.plan[0]
+        self.assertLess(self.expected_start(step), 0.0)
+        sound = self.sounds[step["take"]["file"]]
+        length = int(len(sound) / step["rate"])
+        gain = 10 ** (step["gain_db"] / 20)
+        head, tail = float(sound[0]) * gain, float(sound[-1]) * gain
+        self.assertAlmostEqual(float(self.mix[0]), head, delta=head * 1e-5)
+        self.assertAlmostEqual(float(self.mix[length - 1]), tail, delta=tail * 1e-5)
         self.assertEqual(self.mix[length], 0.0)
 
     def test_sustained_texture_tiles_from_t_to_until_with_fades_and_no_variation(self):

@@ -81,8 +81,9 @@ function setup({ pageDir = "piece" } = {}) {
 }
 
 function render(fx, args, env = {}) {
-  const childEnv = { ...process.env, PATH: fx.bin + path.delimiter + process.env.PATH, FAKE_LOG: fx.log, ...env };
-  for (const k of ["PLAYWRIGHT_BROWSERS_PATH", "CHROME_PATH", "FAKE_NO_BROWSER", "FAKE_DUR"]) {
+  // NO_COLOR, without FORCE_COLOR, keeps Node from colouring the numbers render.mjs prints (an agent's shell may set it).
+  const childEnv = { ...process.env, PATH: fx.bin + path.delimiter + process.env.PATH, FAKE_LOG: fx.log, NO_COLOR: "1", ...env };
+  for (const k of ["PLAYWRIGHT_BROWSERS_PATH", "CHROME_PATH", "FAKE_NO_BROWSER", "FAKE_DUR", "FORCE_COLOR"]) {
     if (!(k in env)) delete childEnv[k];
   }
   fs.rmSync(fx.log, { force: true });

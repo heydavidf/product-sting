@@ -2,7 +2,8 @@
 # check-shell-blocks.sh: fail if a shell code block in the Markdown docs would break when pasted into a terminal.
 # Usage: bash .github/check-shell-blocks.sh   (from anywhere inside the repository)
 # File operands are passed to awk as ./path, so a file name containing = is read as a file, not a variable.
-# For every fenced block marked sh, bash, shell or zsh in a tracked .md file:
+# For every fenced block marked sh, bash, shell or zsh in a tracked .md file, including a fence indented by up to
+# three spaces inside a list (its body is read without that indentation):
 #   1. No comments. Interactive zsh does not treat # as a comment by default, so a pasted comment runs
 #      as text (an apostrophe in it opens a quote and the rest of the block never runs). A # inside
 #      quotes, or inside a word such as a URL fragment, is fine.
@@ -20,7 +21,8 @@ trap 'rm -rf -- "$work"' EXIT
 
 blocks=0
 while IFS= read -r -d '' file; do
-  # The awk below writes each shell block to its own file and prints "path:first-line<TAB>file" for it.
+  # The awk below writes each shell block to its own file and, once the file is complete, prints
+  # "path:first-line<TAB>file" for it.
   while IFS= read -r entry; do
     [ -n "$entry" ] || continue
     blocks=$((blocks + 1))
@@ -51,16 +53,18 @@ $out"
 $out"
     fi
   done < <(awk -v file="$file" -v dir="$work" -v start="$blocks" '
-    /^```/ {
-      if (inblock) { inblock = 0; close(out); next }
-      lang = substr($0, 4); sub(/[[:space:]].*$/, "", lang)
+    function done_block() { inblock = 0; close(out); printf "%s:%d\t%s\n", file, first, out }
+    /^(   |  | )?```/ {
+      if (inblock) { done_block(); next }
+      indent = index($0, "```") - 1
+      lang = substr($0, indent + 4); sub(/[[:space:]].*$/, "", lang)
       if (lang == "sh" || lang == "bash" || lang == "shell" || lang == "zsh") {
-        inblock = 1; n++; out = dir "/block-" (start + n) ".sh"; printf "" > out
-        printf "%s:%d\t%s\n", file, NR + 1, out
+        inblock = 1; n++; out = dir "/block-" (start + n) ".sh"; printf "" > out; first = NR + 1
       }
       next
     }
-    inblock { print > out }
+    inblock { line = $0; for (i = 0; i < indent && substr(line, 1, 1) == " "; i++) line = substr(line, 2); print line > out }
+    END { if (inblock) done_block() }
   ' "./$file")
 done < <(git ls-files -z -- '*.md')
 

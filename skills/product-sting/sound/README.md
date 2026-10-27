@@ -39,4 +39,4 @@ No music is stored here. The user supplies a track for the bed; put it in the pi
 
 ## Licences
 
-Every bundled sound is CC0 1.0 (public domain dedication). The per-file sources are in each library's licence file and manifest; the summary, with the MIT notices for the libraries' manifest and licence files, is in `THIRD_PARTY_NOTICES.md` in the skill's folder. The upstream Barty-Bart manifest also lists some Mixkit sounds as runtime downloads: they are not bundled here, and the pass never downloads them.
+Every bundled sound is CC0 1.0 (public domain dedication). The per-file sources are in each library's licence file and manifest; each library folder also carries its upstream MIT licence (`UPSTREAM-LICENSE.txt`), which covers its manifest and licence file, and the summary is in `THIRD_PARTY_NOTICES.md` in the skill's folder. The upstream Barty-Bart manifest also listed some Mixkit sounds as runtime downloads: those entries were removed from the copy here, and the pass never downloads anything.

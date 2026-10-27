@@ -121,7 +121,7 @@ def add_file(fam, name, path, peak=None, trim_db=None):
 def bartybart(categories, maxms=None):
     """Families from the bundled Barty-Bart library (CC0): {family: category}, categories such as whoosh, click, pop, riser,
     impact, tick, ding, transition, typing, ui-blip, glitch, ambience. Its files peak near 0 dBFS, so each is trimmed to the
-    Coldframe level. See lib/barty-bart/manifest.json (its Mixkit "runtime" entries are never downloaded or used)."""
+    Coldframe level. See lib/barty-bart/manifest.json (only bundled files are used; nothing is ever downloaded)."""
     bb = os.path.join(LIB, "barty-bart")
     with open(os.path.join(bb, "manifest.json")) as f:
         man = json.load(f)

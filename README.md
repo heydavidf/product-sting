@@ -38,7 +38,7 @@ Installing and the first render need no account and no paid service. The preflig
 
 ## Prerequisites
 
-- **Node 20 or later and ffmpeg** for the picture (`brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Debian or Ubuntu). On first run the skill copies its engine into `./motion/_engine/` in your project and installs Playwright and its headless Chromium there, inside the project rather than a shared cache (about 100 MB to download and 200 MB on disk, one time). The renderer's temporary files stay in the project too and are removed after each render.
+- **Node 20 or later and ffmpeg** for the picture (`brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Debian or Ubuntu). On first run the skill copies its engine into `./motion/_engine/` in your project and installs Playwright and its headless Chromium there, inside the project rather than a shared cache (about 100 MB to download and 200 MB on disk, one time). On Linux the browser also needs some system libraries; `npx playwright install-deps chromium` installs them (with sudo). The renderer's temporary files stay in the project too and are removed after each render.
 - **Python 3.12 or later, for the sound step only.** When you ask for sound, the skill copies its sound tools into `./motion/_sound/` and installs the pinned packages (librosa, numpy, soundfile, matplotlib) into a virtual environment there (about 450 MB, one time). Without Python you still get the silent piece.
 - **Optional:** an ElevenLabs API key in the `ELEVENLABS_API_KEY` environment variable, only for a generated brand sound family. It spends credits on your plan.
 - **A brand source**: a DESIGN.md, tokens file, style guide, product URL or screenshots. The skill will not invent a brand.
@@ -127,7 +127,7 @@ The 6-second 1920x1080 final with motion blur rendered in about 31 seconds. The 
 ## What has been tested
 
 - macOS on Apple Silicon, with Claude Code, Node 25, Python 3.14 and ffmpeg 9: installation with `gh skill install`, the preflight, the starter page's stills and MP4s, and the sound pass on the starter cue list. A fresh agent session also made a 12-second product loop for a brand it had not seen, from an installed copy.
-- Ubuntu, in this repository's CI: the engine and sound tests, and a real render of the starter page with the preflight's own install commands.
+- Ubuntu, in this repository's CI: the engine and sound tests, and a real render of the starter page with the preflight's install commands (plus `--with-deps`, which installs the browser's Linux system libraries).
 - **Not tested:** Windows (the sound commands use `.venv/bin/python`, which is a macOS and Linux path), agents other than Claude Code, and the **ElevenLabs path**, which is documented but has not been exercised because no key was used in testing. Treat it as untested.
 
 ## Limitations
@@ -147,7 +147,7 @@ The 6-second 1920x1080 final with motion blur rendered in about 31 seconds. The 
 | `skills/product-sting/templates/` | Starter page (a wide and a square camera table), SPEC.md template, and a CC0 `cues.json` for the starter page |
 | `skills/product-sting/sound/soundpass.py` | The measured sound pass: cue placement, music bed, loudness measured on the MP4, two cuts, proof plots, SOUND.md |
 | `skills/product-sting/sound/eleven_family.py` | Optional ElevenLabs sound-family and music-bed generator (your key, your credits) |
-| `skills/product-sting/sound/lib/` | Two CC0 sound libraries, Coldframe (37 sounds) and Barty-Bart (109), each with its licence file and manifest |
+| `skills/product-sting/sound/lib/` | Two CC0 sound libraries, Coldframe (37 sounds) and Barty-Bart (109), each with its licence file, manifest and upstream MIT licence |
 | `skills/product-sting/sound/requirements.txt` | The sound step's Python packages, pinned |
 | `skills/product-sting/reference/LESSONS.md` | 45 rules, each learned from a broken frame or mix in a real piece, or from a fresh agent's first run |
 | `skills/product-sting/LICENSE`, `skills/product-sting/THIRD_PARTY_NOTICES.md` | Copies of the root files, so an installed copy carries its licence and the bundled sounds' notices |

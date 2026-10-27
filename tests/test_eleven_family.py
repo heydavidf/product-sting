@@ -189,6 +189,9 @@ class MusicBed(unittest.TestCase):
         self.assertEqual(body["music_length_ms"], 20000)
 
 
+KEY = "test-key-7c1e9"
+
+
 class CommandLine(unittest.TestCase):
     """The script run as a program, with the network replaced and stand-in audio packages."""
 
@@ -206,6 +209,14 @@ class CommandLine(unittest.TestCase):
         self.bodies = []
 
     def urlopen(self, req, timeout):
+        self.assertTrue(
+            req.full_url.startswith("https://api.elevenlabs.io/v1/"), req.full_url
+        )
+        self.assertEqual(
+            req.get_header("Xi-api-key"), KEY, "the key goes only in its header"
+        )
+        self.assertNotIn(KEY, req.full_url)
+        self.assertNotIn(KEY.encode(), req.data or b"")
         if req.full_url.endswith("/user/subscription"):
             return FakeResponse(
                 json.dumps(
@@ -224,7 +235,7 @@ class CommandLine(unittest.TestCase):
         argv = ["eleven_family.py", *args]
         with (
             mock.patch.dict(sys.modules, self.modules),
-            mock.patch.dict(os.environ, {"ELEVENLABS_API_KEY": "test-key"}),
+            mock.patch.dict(os.environ, {"ELEVENLABS_API_KEY": KEY}),
             mock.patch.object(sys, "argv", argv),
             mock.patch("urllib.request.urlopen", self.urlopen),
             mock.patch("time.sleep"),
@@ -236,7 +247,14 @@ class CommandLine(unittest.TestCase):
                 )
             except SystemExit as stop:
                 self.assertIn(stop.code, (0, None))
+        self.assertNotIn(KEY, printed.getvalue(), "the key is never printed")
         return printed.getvalue()
+
+    def assert_key_in_no_file(self, folder):
+        for dirpath, _dirs, files in os.walk(folder):
+            for name in files:
+                with open(os.path.join(dirpath, name), "rb") as f:
+                    self.assertNotIn(KEY.encode(), f.read(), name)
 
     def test_sfx_reads_the_spec_file_and_writes_the_family(self):
         spec = os.path.join(self.dir, "family.json")
@@ -249,6 +267,7 @@ class CommandLine(unittest.TestCase):
         with open(os.path.join(out, "manifest.json")) as f:
             self.assertEqual(json.load(f)["credits_used"], 10)
         self.assertTrue(os.path.exists(os.path.join(out, "LICENSE.md")))
+        self.assert_key_in_no_file(self.dir)
 
     def test_music_reads_the_prompt_file(self):
         prompt = os.path.join(self.dir, "bed.txt")
@@ -267,6 +286,7 @@ class CommandLine(unittest.TestCase):
         self.assertEqual(self.bodies[0]["music_length_ms"], 10000)
         with open(os.path.join(out, "bed.json")) as f:
             self.assertEqual(json.load(f)["candidates"][0]["file"], "bed-1.mp3")
+        self.assert_key_in_no_file(self.dir)
 
     def test_credits_prints_the_balance(self):
         self.assertEqual(self.run_script("credits").strip(), "800")
