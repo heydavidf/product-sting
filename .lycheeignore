@@ -1,0 +1,2 @@
+# tripwire-allow: the starter page (skills/product-sting/templates/index.html) has a commented-out @font-face example whose font file each piece adds to its own fonts/ folder, so it never exists in this repository.
+skills/product-sting/templates/fonts/brand\.woff2$

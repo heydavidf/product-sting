@@ -1,0 +1,31 @@
+{
+  "name": "demo",
+  "tag": "v1",
+  "family": {
+    "press": { "lib": "coldframe", "role": "click-firm" },
+    "whoosh": { "lib": "coldframe", "role": "whoosh" },
+    "tick": { "lib": "barty-bart", "category": "tick" },
+    "reward": { "lib": "coldframe", "role": "confirm" }
+  },
+  "cues": [
+    { "t": 0.9, "fam": "press", "db": -2, "who": "you", "desc": "cursor presses Start" },
+    { "t": 1.12, "fam": "whoosh", "db": -7, "who": "product", "desc": "button opens into the card (peak on the fastest frame)", "peak_align": true, "maxlen": 0.7 },
+    { "t": 1.6, "fam": "tick", "db": -10, "who": "product", "desc": "progress step 1" },
+    { "t": 2.2, "fam": "tick", "db": -10, "who": "product", "desc": "progress step 2" },
+    { "t": 2.8, "fam": "tick", "db": -9, "who": "product", "desc": "progress step 3, bar full" },
+    { "t": 3.8, "fam": "reward", "db": 3, "who": "product", "desc": "tick draws: the one reward sound, loudest cue" },
+    { "t": 4.9, "fam": "whoosh", "db": -12, "who": "product", "desc": "done circle folds back into the button (lighter)", "peak_align": true, "rate": 1.12, "maxlen": 0.6 }
+  ],
+  "music": null,
+  "music_source": "",
+  "music_license": "",
+  "sfx_credit": "Coldframe and Barty-Bart CC0 libraries (Kenney and Freesound sounds, CC0 1.0)",
+  "checks": [
+    "0.90s press: crisp and in time with the button sinking?",
+    "1.12s whoosh: does its loudest moment meet the fastest part of the morph?",
+    "1.6s to 2.8s ticks: quiet enough to sit under the card's reads?",
+    "3.8s reward: clearly the loudest and only reward sound?",
+    "5.9s to 0.0s loop point: any click or gap when the loop repeats?"
+  ],
+  "options": { "target_lufs": -16, "max_tp": -2, "max_limiting": 5, "post_fade": 1.4, "seed": 11 }
+}

@@ -1,0 +1,6 @@
+# What soundpass.py and eleven_family.py import, pinned to the versions tested on 27 October 2026 (macOS, Python 3.14).
+# These versions need Python 3.12 or later (librosa 1.0.0 and numpy 2.5.4 require it).
+librosa==1.0.0
+numpy==2.5.4
+soundfile==0.14.0
+matplotlib==3.11.2

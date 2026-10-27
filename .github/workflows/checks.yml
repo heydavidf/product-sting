@@ -1,0 +1,119 @@
+# Checks for the product-sting skill: lint and format, tests, a real render of the starter page, known
+# vulnerabilities in the engine and sound dependencies, the Agent Skills format, docs, tripwire, secrets and links.
+# Runs on every push to main, on pull requests, weekly (the weekly run also checks external links) and on demand.
+# AGENTS.md lists the same checks for running locally. The job name "checks" is the check name a branch
+# ruleset can require; keep it stable.
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "41 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      pull-requests: read # gitleaks-action lists a pull request's commits through the API
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Lint and format (ruff)
+        run: |
+          pipx run --spec ruff==0.17.1 ruff check --no-cache .
+          pipx run --spec ruff==0.17.1 ruff format --no-cache --check .
+
+      - name: Engine tests (node --test, no browser needed)
+        run: node --test tests/*.test.mjs
+
+      - name: Sound tests (unittest, with the pinned numpy only)
+        run: |
+          python -m venv "$RUNNER_TEMP/tests-venv"
+          "$RUNNER_TEMP/tests-venv/bin/pip" install --quiet "$(grep -E '^numpy==' skills/product-sting/sound/requirements.txt)"
+          "$RUNNER_TEMP/tests-venv/bin/python" -m unittest discover -s tests -v
+
+      - name: Copies in the skill folder match the root LICENSE and THIRD_PARTY_NOTICES.md
+        run: |
+          cmp LICENSE skills/product-sting/LICENSE
+          cmp THIRD_PARTY_NOTICES.md skills/product-sting/THIRD_PARTY_NOTICES.md
+
+      - name: Starter page renders (SKILL.md Step 0 on a fresh engine, outside the checkout)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends ffmpeg
+          work="$RUNNER_TEMP/smoke"
+          mkdir -p "$work/motion/_engine" "$work/motion/_smoke"
+          cp skills/product-sting/engine/* "$work/motion/_engine/"
+          cp skills/product-sting/templates/index.html "$work/motion/_smoke/"
+          cd "$work/motion/_engine"
+          npm install --ignore-scripts --no-audit --no-fund
+          PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install --with-deps --only-shell chromium
+          cd "$work/motion/_smoke"
+          node ../_engine/render.mjs --page=index.html --stills=0,1.5,4.3 --out=smoke.png
+          node ../_engine/render.mjs --page=index.html --range=0.9,1.5 --sub=4 --out=smoke.mp4
+          size=$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 smoke.png)
+          frames=$(ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of csv=p=0 smoke.mp4)
+          echo "contact sheet $size, video $frames frames"
+          [ "$size" = "1920,360" ] && [ "$frames" = "18" ]
+          [ ! -e .tmp ]
+
+      - name: Known vulnerabilities (npm audit on the engine, pip-audit on the sound step, high and above)
+        run: |
+          (cd "$RUNNER_TEMP/smoke/motion/_engine" && npm audit --omit=dev --audit-level=high)
+          pipx run --spec pip-audit==2.10.1 pip-audit --progress-spinner off -r skills/product-sting/sound/requirements.txt
+
+      - name: Agent Skills spec (skills-ref, pinned)
+        run: |
+          python -m venv "$RUNNER_TEMP/skills-ref"
+          "$RUNNER_TEMP/skills-ref/bin/pip" install --quiet 'skills-ref @ git+https://github.com/agentskills/agentskills.git@69ef37e9424c0a7ea9dd2293b559e43ec8176379#subdirectory=skills-ref'
+          for skill in skills/*/; do
+            "$RUNNER_TEMP/skills-ref/bin/skills-ref" validate "$PWD/${skill%/}"
+          done
+
+      - name: Shell blocks in the docs paste cleanly (bash and zsh)
+        run: bash .github/check-shell-blocks.sh
+
+      - name: Tripwire (personal paths, junk files, stray sounds or renders, silenced checks)
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_REF" ] && git cat-file -e "$BASE_REF" 2>/dev/null; then bash .github/tripwire.sh "$BASE_REF"; else echo "::warning::No base commit available, so newly silenced checks were not looked for"; bash .github/tripwire.sh; fi
+
+      - name: Secrets (gitleaks)
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The token is read-only, so report findings in the job log instead of as pull request comments.
+          GITLEAKS_ENABLE_COMMENTS: "false"
+
+      - name: Links (local on every run, external weekly)
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: ${{ github.event_name == 'schedule' && '--no-progress .' || '--offline --no-progress .' }}
+          fail: true

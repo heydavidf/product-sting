@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>product-sting starter</title>
+<style>
+  /* Replace with the brand's real tokens and local @font-face files (never a CDN font: renders must be offline and repeatable).
+     @font-face { font-family: "Brand"; src: url("fonts/brand.woff2") format("woff2"); font-weight: 100 900; } */
+  :root { --bg: #f6f5f1; --surface: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --accent: #2f6fed; --line: #e3e1da; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
+  /* ?ar=square: a 1080x1080 viewport (render with --w=1080 --h=1080 --q=ar=square). Same stage, its own camera table (CAMERAS below). */
+  :root[data-ar="square"], :root[data-ar="square"] body { width: 1080px; height: 1080px; }
+  .abs { position: absolute; }
+  /* The stage holds the 1920x1080 layout. Only the camera moves it. */
+  #stage { left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  /* The one shape. Its geometry is driven from seek(t); its contents are layers with their own timing.
+     The box-shadow is a placeholder: delete it for a flat brand (one that bans shadows). */
+  #shape { background: var(--surface); border: 1px solid var(--line); overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.08); }
+  .layer { position: absolute; inset: 0; display: grid; place-items: center; }
+  #lBtn { font-size: 34px; font-weight: 600; color: #fff; }
+  #lCard { padding: 48px 56px; place-items: start; align-content: start; }
+  #lCard .eyebrow { font-size: 18px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  #lCard h2 { font-size: 52px; font-weight: 700; letter-spacing: -.02em; margin-top: 14px; }
+  #lCard .rule { position: absolute; left: 56px; right: 56px; bottom: 56px; height: 10px; border-radius: 5px; background: var(--line); }
+  #lCard .fill { height: 100%; border-radius: 5px; background: var(--accent); transform-origin: left; }
+  #lDone svg { width: 96px; height: 96px; }
+  #cursor { width: 34px; height: 34px; border-radius: 50%; background: rgba(29,29,31,.28); z-index: 10; }
+</style>
+</head>
+<body>
+<div id="stage" class="abs">
+  <div id="shape" class="abs">
+    <div id="lBtn" class="layer">Start</div>
+    <div id="lCard" class="layer"><div class="eyebrow">Example data</div><h2>Building your report</h2><div class="rule"><div class="fill"></div></div></div>
+    <div id="lDone" class="layer"><svg viewBox="0 0 96 96"><path id="tick" d="M26 50 L42 66 L72 34" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" /></svg></div>
+  </div>
+  <div id="cursor" class="abs"></div>
+</div>
+<!-- HUD (a logo mark, a caption, a corner label): put it here, outside #stage, so the camera never moves it.
+     Position it per format with :root[data-ar="..."] rules. -->
+
+<script src="../_engine/motion.js"></script>
+<script>
+// State list (see SPEC.md). 120 BPM = 0.5s beats. Last frame must equal the first.
+const DUR = 6;
+const UI = SPRINGS.snappy, CARD = SPRINGS.def, HV = SPRINGS.heavy;
+const $ = (id) => document.getElementById(id);
+const stage = $("stage"), shape = $("shape"), btn = $("lBtn"), card = $("lCard"), done = $("lDone"), fill = card.querySelector(".fill"), tick = $("tick"), cursor = $("cursor");
+
+// Formats: one page, one camera table per aspect ratio, picked by ?ar= (render.mjs passes it: --q=ar=square).
+// The query gets its own names (QUERY, AR) so it cannot clash with page or motion.js helpers (win, life, mix, track...).
+const QUERY = new URLSearchParams(location.search);
+const AR = QUERY.get("ar") || "wide";
+document.documentElement.dataset.ar = AR;
+// size = the viewport in CSS px; open = the opening framing [focus x, focus y, zoom] in stage px; moves = [time, x, y, zoom].
+// The last move returns to the opening framing, so the loop still closes. A tighter frame pushes in less.
+// A fixed camera is open [960, 540, 1.0] with moves: []. Use it when an asset must not be shown above its captured size.
+// Add a row per format you render, for example portrait: { size: [1080, 1350], open: [...], moves: [...] }.
+const CAMERAS = {
+  wide:   { size: [1920, 1080], open: [960, 540, 1.0], moves: [[1.0, 960, 540, 1.12], [3.5, 960, 540, 1.0]] },
+  square: { size: [1080, 1080], open: [960, 540, 1.0], moves: [[1.0, 960, 540, 1.04], [3.5, 960, 540, 1.0]] },
+};
+const CAMERA = CAMERAS[AR] || CAMERAS.wide;
+
+// Geometry targets per state: [w, h, radius]. One spring per change, so values never jump.
+const BTN = [260, 96, 48], CARDG = [880, 420, 20], DONE = [180, 180, 90];
+const GEO = [[1.0, CARDG, CARD], [3.5, DONE, CARD], [4.8, BTN, HV]];
+
+window.seek = function (t) {
+  t = ((t % DUR) + DUR) % DUR;
+  const g = [0, 1, 2].map((k) => track(t, BTN[k], GEO.map(([at, r, c]) => [at, r[k], c])));
+  // Press: the button sinks a little before it opens (anticipation).
+  const press = 1 - 0.06 * Math.sin(Math.PI * win(t, 0.8, 1.0));
+  shape.style.width = g[0] + "px"; shape.style.height = g[1] + "px"; shape.style.borderRadius = g[2] + "px";
+  shape.style.left = 960 - g[0] / 2 + "px"; shape.style.top = 540 - g[1] / 2 + "px";
+  shape.style.transform = `scale(${press})`;
+
+  // Surface colour: accent for button and done, white for the card. Blend in OKLab.
+  const toCard = track(t, 0, [[1.0, 1, UI], [3.5, 0, UI]]);
+  shape.style.background = mix("var(--accent)", "var(--surface)", toCard);
+
+  // Each layer has its own life window, and text outlives nothing: it leaves before its container shrinks.
+  show(btn, life(t, -1, 0.95, 0.18, 0.1) + life(t, 5.1, 7, 0.25, 0.1));
+  show(card, life(t, 1.25, 3.3));
+  show(done, life(t, 3.75, 4.7));
+  fill.style.transform = `scaleX(${track(t, 0, [[1.6, 0.35, CARD], [2.2, 0.8, CARD], [2.8, 1, CARD]])})`;
+  tick.style.strokeDashoffset = 1 - easeOut(win(t, 3.8, 4.2));
+
+  // Cursor glides in, presses at 0.9s, then leaves the frame so it never sits on top of the content.
+  const cx = track(t, 1180, [[0.2, 990, UI], [1.1, 1560, UI], [5.2, 1180, UI]]);
+  const cy = track(t, 700, [[0.2, 560, UI], [1.1, 900, UI], [5.2, 700, UI]]);
+  cursor.style.left = cx + "px"; cursor.style.top = cy + "px";
+  cursor.style.transform = `scale(${1 - 0.25 * Math.sin(Math.PI * win(t, 0.8, 1.0))})`;
+  show(cursor, life(t, 0.1, 1.15, 0.2, 0.2));
+
+  // Camera: a heavy spring per move, applied to #stage only (never to the HUD).
+  const [fw, fh] = CAMERA.size, [ox, oy, oz] = CAMERA.open;
+  const fx = track(t, ox, CAMERA.moves.map(([at, x]) => [at, x]), HV);
+  const fy = track(t, oy, CAMERA.moves.map(([at, , y]) => [at, y]), HV);
+  const zoom = track(t, oz, CAMERA.moves.map(([at, , , z]) => [at, z]), HV);
+  stage.style.transform = `translate(${fw / 2 - fx * zoom}px, ${fh / 2 - fy * zoom}px) scale(${zoom})`;
+};
+window.DUR = DUR;
+// Ready only once every font weight the piece uses and every image has loaded. A weight first used mid-piece
+// can otherwise arrive late and render its first frames in a fallback face. One entry per weight, in the brand's family.
+const FONT_FACES = ['600 20px system-ui', '700 20px system-ui'];
+Promise.all([...FONT_FACES.map((f) => document.fonts.load(f)), ...[...document.images].map((img) => img.decode())])
+  .then(() => document.fonts.ready)
+  .then(() => { window.seek(0); window.__ready = true; });
+</script>
+</body>
+</html>

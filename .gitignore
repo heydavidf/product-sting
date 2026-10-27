@@ -1,0 +1,9 @@
+# Pieces made with the skill, and the files the renderer, tests and sound pass create while working.
+motion/
+.tmp/
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.ruff_cache/
+.DS_Store
