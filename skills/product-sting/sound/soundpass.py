@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 David Finnegan. Part of product-sting, https://github.com/heydavidf/product-sting
 """Measured sound pass for product-sting pieces: a silent MP4 and a cue list in, a measured MP4 with sound and its proof out.
 
 It places real recorded sounds with variation (never the same take twice in a row, playback rate 0.96 to 1.04, gain +-1.5 dB),

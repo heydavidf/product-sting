@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 David Finnegan. Part of product-sting, https://github.com/heydavidf/product-sting
 """Optional: generate a brand sound family and music-bed candidates with the ElevenLabs API. The bundled CC0 libraries need none of this.
 
   ../_sound/.venv/bin/python ../_sound/eleven_family.py credits

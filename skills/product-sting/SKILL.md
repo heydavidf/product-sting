@@ -87,7 +87,7 @@ Ask only for what the user has not already given, and list back what they did gi
    - A stated interaction timing (for example "state changes take 200ms") becomes the timing of text fades.
 4. Fonts must be local files. If the brand uses a Google font, install it inside the project, copy the `.woff2` files for the weights you use and the package's `LICENSE` file into `<piece>/fonts/`, then delete `motion/_fonts-tmp/`. The files land in `motion/_fonts-tmp/node_modules/@fontsource/inter/files/` for this example (use `@fontsource-variable/<font>` for a variable font):
    ```bash
-   npm install --prefix motion/_fonts-tmp @fontsource/inter
+   npm install --ignore-scripts --prefix motion/_fonts-tmp @fontsource/inter
    ```
    If the font is commercial and unavailable, ask the user for the files or agree a fallback.
 5. **A logo that is only a word.** If there is no logo file and the logo is the name set in the brand font, set it from the font with the guide's weight and letter-spacing, and confirm that with the user.

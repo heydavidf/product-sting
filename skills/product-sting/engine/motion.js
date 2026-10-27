@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 David Finnegan. Part of product-sting, https://github.com/heydavidf/product-sting
 // product-sting motion helpers. Every value is a pure function of time: no timers, no counters, no Math.random().
 // Load with <script src="../_engine/motion.js"></script>; everything below is a global.
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));

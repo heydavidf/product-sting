@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 David Finnegan. Part of product-sting, https://github.com/heydavidf/product-sting
 // product-sting renderer: a seek(t) page -> Playwright screenshots -> ffmpeg.
 // The page must define window.seek(t), window.DUR (seconds) and set window.__ready = true once fonts and images are loaded.
 //

@@ -99,7 +99,9 @@ jobs:
           done
 
       - name: Shell blocks in the docs paste cleanly (bash and zsh)
-        run: bash .github/check-shell-blocks.sh
+        run: |
+          sudo apt-get install -y -qq --no-install-recommends zsh
+          bash .github/check-shell-blocks.sh
 
       - name: Tripwire (personal paths, junk files, stray sounds or renders, silenced checks)
         env:

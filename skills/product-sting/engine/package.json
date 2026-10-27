@@ -3,6 +3,9 @@
   "private": true,
   "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "description": "Renderer for product-sting pieces: seek(t) page -> Playwright -> ffmpeg.",
   "dependencies": {
     "playwright": "^1.50.0"

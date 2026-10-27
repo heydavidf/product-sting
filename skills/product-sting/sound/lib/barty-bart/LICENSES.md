@@ -1,6 +1,6 @@
 # Licences
 
-> **In product-sting:** this file and `manifest.json` come from [Barty-Bart/motion-graphics](https://github.com/Barty-Bart/motion-graphics) (`skills/sound-effects/`, commit 3d83d987d658601d8a1269eb691622bdcd427335), MIT licensed: see `UPSTREAM-LICENSE.txt` in this folder. Changed here: the Mixkit runtime-download entries were removed from both files and the Mixkit paragraph below was reworded. Everything else describes the upstream skill as it was; the sounds themselves are unchanged.
+> **In product-sting:** this file and `manifest.json` come from [Barty-Bart/motion-graphics](https://github.com/Barty-Bart/motion-graphics) (`skills/sound-effects/`, commit 3d83d987d658601d8a1269eb691622bdcd427335), MIT licensed: see `UPSTREAM-LICENSE.txt` in this folder. Changed here: the Mixkit runtime-download entries were removed from both files and the Mixkit paragraph below was reworded. Everything else describes the upstream skill as it was; the sounds themselves are unchanged. `UPSTREAM-LICENSE.txt` is upstream's LICENSE file word for word; its last paragraph is about fonts and icons in other upstream folders, which product-sting does not include.
 
 ## Code and docs
 The scripts and SKILL.md are licensed under the repo's licence. The sound-pass approach is credited to Vox (@Voxyz_ai).
